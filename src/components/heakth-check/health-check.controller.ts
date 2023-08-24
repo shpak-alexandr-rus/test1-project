@@ -4,6 +4,7 @@ import { IResponse } from 'src/interfaces/responses';
 import { IHealthCheckResponce } from 'src/interfaces/responses/health-check';
 import { ApiResponse } from '@nestjs/swagger';
 import { HealthCheckResponse } from 'src/dto/health-check/health-check.dto';
+import logger from '../../logger/logger';
 
 @Controller()
 @ApiResponse({ status: 200, type: HealthCheckResponse })
@@ -12,6 +13,7 @@ export class HealthCheckController {
 
   @Get('helth-check')
   async getHealthCheck(): Promise<IResponse<IHealthCheckResponce>> {
+    logger.info("Working controller for \"/health-check\" endpoint.");
     return this.helthCheckService.getHealthCheck();
   }
 }

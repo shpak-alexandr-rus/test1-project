@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SWAGGER_CONSTANTS } from './constants/swagger/swagger';
+import logger from './logger/logger';
 import 'dotenv/config';
 
 async function bootstrap() {
@@ -19,12 +20,12 @@ async function bootstrap() {
   await app
     .listen(+process.env.PORT, process.env.HOST)
     .then(() => {
-      console.log(
+      logger.info(
         `Server started on ${process.env.PORT} port with host name "${process.env.HOST}"!`,
       );
     })
     .catch((e) => {
-      console.log(e.message);
+      logger.error(e.message);
     });
 }
 

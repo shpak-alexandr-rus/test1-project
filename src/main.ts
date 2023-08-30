@@ -18,10 +18,10 @@ async function bootstrap() {
   SwaggerModule.setup(SWAGGER_CONSTANTS.PATH, app, document);
 
   await app
-    .listen(+process.env.PORT, process.env.HOST)
+    .listen(+process.env.PORT)
     .then(() => {
       logger.info(
-        `Server started on ${process.env.PORT} port with host name "${process.env.HOST}"!`,
+        `Server started on ${process.env.PORT} port!`,
       );
     })
     .catch((e) => {

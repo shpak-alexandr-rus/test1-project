@@ -1,7 +1,6 @@
 # compiled output
 /dist
 /node_modules
-package-lock.json
 
 # Logs
 logs
@@ -17,6 +16,3 @@ logs
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
-# Dotenv
-.env

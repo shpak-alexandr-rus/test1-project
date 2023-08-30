@@ -14,6 +14,7 @@ export class HealthCheckService {
       const result = await dataSource.query('SELECT 1+1 AS result;');
       logger.info('Result from DB getted.');
 
+      await AppDataSource.destroy();
       return {
         code: 200,
         data: {

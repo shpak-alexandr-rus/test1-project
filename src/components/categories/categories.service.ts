@@ -2,19 +2,18 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { IResponse } from 'src/interfaces/responses';
 import logger from '../../logger/logger';
 import {
-  ICategoriesList,
-  ICategory,
-  IDeleteCategoryStatus,
-  IUpdateCategoryStatus,
+//  ICategoriesList,
+  ICategory, IStatus,
+//  IDeleteCategoryStatus,
+//  IUpdateCategoryStatus,
 } from 'src/interfaces/responses/categories';
 import { CategoryEntity } from 'src/entities/category.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  CreateCategoryDto,
-  PartialyUpdateCategoryDto,
-} from 'src/dto/categories/category.dto';
-import { UpdateCategoryDto } from 'src/dto/categories/category.dto';
+import { CreateCategory } from './dto/create-category.dto';
+import { UpdateCategory } from './dto/update-category.dto';
+import { PartialyUpdateCategory } from './dto/partialy-update-category.dto';
+
 
 @Injectable()
 export class CategoryService {
@@ -24,11 +23,17 @@ export class CategoryService {
   ) {}
 
   // Здесь нужно добавить пагинацию и фильтрацию
-  async getCategoriesList(): Promise<IResponse<ICategoriesList>> {
+  async getCategoriesList(): Promise<IResponse<ICategory>> {
     logger.info('Start getCategoriesList method.');
     try {
       const categoriesEntities: CategoryEntity[] =
-        await this.categoryRepository.find();
+        await this.categoryRepository.find({
+          order: {
+              createdDate: "DESC"
+          },
+          skip: 0,
+          take: 2
+      });
       return {
         code: HttpStatus.OK,
         data: categoriesEntities,
@@ -44,11 +49,15 @@ export class CategoryService {
   }
 
   // Этот метод проверочный. Для получения всех категорий
-  async getAllCategories(): Promise<IResponse<ICategoriesList>> {
+  async getAllCategories(): Promise<IResponse<ICategory>> {
     logger.info('Start getAllCategories method.');
     try {
       const categoriesEntities: CategoryEntity[] =
-        await this.categoryRepository.find();
+        await this.categoryRepository.find({
+          order: {
+            id: "ASC"
+          }
+        });
       return {
         code: HttpStatus.OK,
         data: categoriesEntities,
@@ -105,13 +114,25 @@ export class CategoryService {
   }
 
   async crearteCategory(
-    createCategoryDto: CreateCategoryDto,
+    createCategoryDto: CreateCategory,
   ): Promise<IResponse<ICategory>> {
     logger.info('Start crearteCategory method.');
     try {
-      if (!this.isSlugUnick(createCategoryDto.slug)) {
+      const checkSlug: RegExpMatchArray = createCategoryDto.slug.match(/[a-zA-Z\s]+/g);
+      if (!checkSlug || checkSlug.length !== 1) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          data: null,
+          message: 'Slug value incorrect.',
+        };
+      }
+      if (await this.isSlugUnick(createCategoryDto.slug)) {
+        const category: CreateCategory = {...createCategoryDto};
+        if (createCategoryDto.active) {
+          category.active = this.getActiveValue(createCategoryDto.active);
+        }
         const createdCategory: CategoryEntity =
-          await this.categoryRepository.save(createCategoryDto);
+          await this.categoryRepository.save(category);
         return {
           code: HttpStatus.OK,
           data: createdCategory,
@@ -133,8 +154,8 @@ export class CategoryService {
   }
 
   async updateCategory(
-    updateCategoryDto: UpdateCategoryDto,
-  ): Promise<IResponse<IUpdateCategoryStatus>> {
+    updateCategoryDto: UpdateCategory,
+  ): Promise<IResponse<IStatus>> {
     logger.info('Start updateCategory method.');
     try {
       // Need to implement
@@ -155,8 +176,8 @@ export class CategoryService {
   }
 
   async partialyUpdateCategory(
-    partialyUpdateCategoryDto: PartialyUpdateCategoryDto,
-  ): Promise<IResponse<IUpdateCategoryStatus>> {
+    partialyUpdateCategoryDto: PartialyUpdateCategory,
+  ): Promise<IResponse<IStatus>> {
     logger.info('Start partialyUpdateCategory method.');
     try {
       // Need to implement
@@ -178,7 +199,7 @@ export class CategoryService {
 
   async deleteCategory(
     categoryId: number,
-  ): Promise<IResponse<IDeleteCategoryStatus>> {
+  ): Promise<IResponse<IStatus>> {
     logger.info('Start deleteCategory method.');
     try {
       // Проверка на наличие не проводиться
@@ -200,10 +221,25 @@ export class CategoryService {
     }
   }
 
+  // Приватные методы
   private async isSlugUnick(categorySlug: string): Promise<boolean> {
     logger.info('Start isSlugUnick method.');
     const categoryBySlug: CategoryEntity =
       await this.categoryRepository.findOne({ where: { slug: categorySlug } });
-    return !!categoryBySlug;
+    return !categoryBySlug;
+  }
+
+  //TODO: нужно переделать
+  private getActiveValue(value: any): boolean {
+    switch(value) {
+      case 1:
+      case true:
+        return true;
+      case 0:
+      case false:
+        return false;
+      default:
+        throw new Error('Incorrect value for Active column.');
+    }
   }
 }

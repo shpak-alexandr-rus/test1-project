@@ -11,22 +11,19 @@ export interface ICategory {
   active: boolean;
 }
 
-export interface ICategoriesList extends ICategory {}
-
-// Нужен, так как в дальнейшеим CategoriesListResponse будет дополнен
-export interface IAllCategories extends ICategory {}
-
-// Нужен, так как в дальнейшеим CategoriesListResponse будет дополнен
-export interface ICategoryById extends ICategory {}
-
 export interface ICreateCategory {
+  slug: string;
+  name: string;
+  description: string;
+  active?: boolean;
+}
+
+export interface IUpdateCategory {
   slug: string;
   name: string;
   description: string;
   active: boolean;
 }
-
-export interface IUpdateCategory extends ICreateCategory {}
 
 export interface IPartialyUpdateCategory {
   slug?: string;
@@ -35,6 +32,3 @@ export interface IPartialyUpdateCategory {
   active?: boolean;
 }
 
-export interface IUpdateCategoryStatus extends IStatus {}
-
-export interface IDeleteCategoryStatus extends IStatus {}

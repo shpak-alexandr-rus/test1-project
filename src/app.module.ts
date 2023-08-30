@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { HealthCheckModule } from './components/heakth-check/health-check.module';
+import { HealthCheckModule } from './components/health-check/health-check.module';
 import { CategoryModule } from './components/categories/categories.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceConfig } from 'data-source';

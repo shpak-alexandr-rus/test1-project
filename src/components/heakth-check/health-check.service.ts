@@ -9,10 +9,10 @@ import logger from '../../logger/logger';
 export class HealthCheckService {
   async getHealthCheck(): Promise<IResponse<IHealthCheckResponce>> {
     try {
-      logger.info("Try connect to DB and execute simpe SQL query.");
+      logger.info('Try connect to DB and execute simpe SQL query.');
       const dataSource: DataSource = await AppDataSource.initialize();
       const result = await dataSource.query('SELECT 1+1 AS result;');
-      logger.info("Result from DB getted.");
+      logger.info('Result from DB getted.');
 
       return {
         code: 200,

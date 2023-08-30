@@ -12,7 +12,9 @@ export class HealthCheckController {
   constructor(private readonly helthCheckService: HealthCheckService) {}
 
   @Get('health-check')
-  @ApiOperation({summary: 'Проверка доступности сервера и наличия связи с базой данных.'})
+  @ApiOperation({
+    summary: 'Проверка доступности сервера и наличия связи с базой данных.',
+  })
   @ApiResponse({ status: 200, type: HealthCheckResponse })
   async getHealthCheck(): Promise<IResponse<IHealthCheckResponce>> {
     logger.info('Working controller for "/health-check" endpoint.');

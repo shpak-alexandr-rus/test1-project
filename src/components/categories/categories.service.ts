@@ -1,11 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { IResponse } from 'src/interfaces/responses';
+import { IResponse, IStatus } from 'src/interfaces/responses';
 import logger from '../../logger/logger';
 import {
-//  ICategoriesList,
-  ICategory, IStatus,
-//  IDeleteCategoryStatus,
-//  IUpdateCategoryStatus,
+  ICategory
 } from 'src/interfaces/responses/categories';
 import { CategoryEntity } from 'src/entities/category.entity';
 import { Repository } from 'typeorm';
@@ -13,7 +10,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCategory } from './dto/create-category.dto';
 import { UpdateCategory } from './dto/update-category.dto';
 import { PartialyUpdateCategory } from './dto/partialy-update-category.dto';
-
 
 @Injectable()
 export class CategoryService {
@@ -29,11 +25,11 @@ export class CategoryService {
       const categoriesEntities: CategoryEntity[] =
         await this.categoryRepository.find({
           order: {
-              createdDate: "DESC"
+            createdDate: 'DESC',
           },
           skip: 0,
-          take: 2
-      });
+          take: 2,
+        });
       return {
         code: HttpStatus.OK,
         data: categoriesEntities,
@@ -55,8 +51,8 @@ export class CategoryService {
       const categoriesEntities: CategoryEntity[] =
         await this.categoryRepository.find({
           order: {
-            id: "ASC"
-          }
+            id: 'ASC',
+          },
         });
       return {
         code: HttpStatus.OK,
@@ -118,7 +114,8 @@ export class CategoryService {
   ): Promise<IResponse<ICategory>> {
     logger.info('Start crearteCategory method.');
     try {
-      const checkSlug: RegExpMatchArray = createCategoryDto.slug.match(/[a-zA-Z\s]+/g);
+      const checkSlug: RegExpMatchArray =
+        createCategoryDto.slug.match(/[a-zA-Z\s]+/g);
       if (!checkSlug || checkSlug.length !== 1) {
         return {
           code: HttpStatus.FORBIDDEN,
@@ -127,7 +124,7 @@ export class CategoryService {
         };
       }
       if (await this.isSlugUnick(createCategoryDto.slug)) {
-        const category: CreateCategory = {...createCategoryDto};
+        const category: CreateCategory = { ...createCategoryDto };
         if (createCategoryDto.active) {
           category.active = this.getActiveValue(createCategoryDto.active);
         }
@@ -197,9 +194,7 @@ export class CategoryService {
     }
   }
 
-  async deleteCategory(
-    categoryId: number,
-  ): Promise<IResponse<IStatus>> {
+  async deleteCategory(categoryId: number): Promise<IResponse<IStatus>> {
     logger.info('Start deleteCategory method.');
     try {
       // Проверка на наличие не проводиться
@@ -231,7 +226,7 @@ export class CategoryService {
 
   //TODO: нужно переделать
   private getActiveValue(value: any): boolean {
-    switch(value) {
+    switch (value) {
       case 1:
       case true:
         return true;

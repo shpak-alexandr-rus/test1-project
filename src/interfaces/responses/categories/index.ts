@@ -1,7 +1,3 @@
-export interface IStatus {
-  status: boolean;
-}
-
 export interface ICategory {
   id: number;
   slug: string;
@@ -31,4 +27,3 @@ export interface IPartialyUpdateCategory {
   description?: string;
   active?: boolean;
 }
-

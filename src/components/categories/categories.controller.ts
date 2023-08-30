@@ -7,16 +7,11 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IResponse } from 'src/interfaces/responses';
-import {
-//  IAllCategories,
-//  ICategoriesList,
-  ICategory, IStatus,
-//  IDeleteCategoryStatus,
-//  IUpdateCategoryStatus,
-} from 'src/interfaces/responses/categories';
+import { IResponse, IStatus } from 'src/interfaces/responses';
+import { ICategory } from 'src/interfaces/responses/categories';
 import logger from 'src/logger/logger';
 import { CategoryService } from './categories.service';
 import { CategoriesPagListResponse } from './dto/categories-pag-list-response.dto';
@@ -36,17 +31,21 @@ export class CategoryController {
      IResponse<ICategory> нужно будет заменить на что-то с пагинацией (эта часть 100% не подойдет)
   */
   @Get()
-  @ApiOperation({summary: "Возвращает список категорий (с пагинацией, сортировкой и фильтрацией)."})
-  @ApiResponse({ status: 200, type: CategoriesPagListResponse })  
+  @ApiOperation({
+    summary:
+      'Возвращает список категорий (с пагинацией, сортировкой и фильтрацией).',
+  })
+  @ApiResponse({ status: 200, type: CategoriesPagListResponse })
   async getCategoriesList(): Promise<IResponse<ICategory>> {
-    logger.info(
-      'Working controller for GET "/categories/" endpoint.',
-    );
+    logger.info('Working controller for GET "/categories/" endpoint.');
     return this.categoryService.getCategoriesList();
   }
 
   @Get('get-all-categories')
-  @ApiOperation({summary: "Возвращает ВЕСЬ список категорий (весь без пагинации, сортировки и фильтрации)."})
+  @ApiOperation({
+    summary:
+      'Возвращает ВЕСЬ список категорий (весь без пагинации, сортировки и фильтрации).',
+  })
   @ApiResponse({ status: 200, type: AllCategoriesResponse })
   async getAllCategories(): Promise<IResponse<ICategory>> {
     logger.info(
@@ -55,75 +54,68 @@ export class CategoryController {
     return this.categoryService.getAllCategories();
   }
 
-  @Get(':id')
-  @ApiOperation({summary: "Возвращает категорию с указанным id."})
-  @ApiResponse({ status: 200, type: CategoryResponse })
-  async getCategoryById(
-    @Param('id') id: number,
-  ): Promise<IResponse<ICategory>> {
-    logger.info(
-      `Working controller for GET \"/categories/${id}\" endpoint.`,
-    );
-    return this.categoryService.getCategoryById(id);
-  }
-
-
-  // TODO: Возможно, нужно изменить на search параметр URL
-  @Get('/get-by-slug/:slug')
-  @ApiOperation({summary: "Возвращает категорию с указанным slug."})
+  @Get('slug?')
+  @ApiOperation({ summary: 'Возвращает категорию с указанным slug.' })
   @ApiResponse({ status: 200, type: CategoryResponse })
   async getCategoryBySlug(
-    @Param('slug') slug: string,
+    @Query('slug') slug: string,
   ): Promise<IResponse<ICategory>> {
     logger.info(
-      `Working controller for \"/categories/${slug}\" endpoint.`,
+      `Working controller for \"/categories?slug=${slug}\" endpoint.`,
     );
     return this.categoryService.getCategoryBySlug(slug);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Возвращает категорию с указанным id.' })
+  @ApiResponse({ status: 200, type: CategoryResponse })
+  async getCategoryById(
+    @Param('id') id: number,
+  ): Promise<IResponse<ICategory>> {
+    logger.info(`Working controller for GET \"/categories/${id}\" endpoint.`);
+    return this.categoryService.getCategoryById(id);
+  }
+
   @Post()
-  @ApiOperation({summary: "Создание новой категории."})
+  @ApiOperation({ summary: 'Создание новой категории.' })
   @ApiResponse({ status: 200, type: CategoryResponse })
   async createCategory(
     @Body() dto: CreateCategory,
   ): Promise<IResponse<ICategory>> {
-    logger.info(
-      `Working controller for POST \"/categories/\" endpoint.`,
-    );
+    logger.info(`Working controller for POST \"/categories/\" endpoint.`);
     return this.categoryService.crearteCategory(dto);
   }
 
   // Нужно добавить id в запрос
   @Put()
-  @ApiOperation({summary: "Обновление всей категории целиком (НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ)."})
+  @ApiOperation({
+    summary:
+      'Обновление всей категории целиком (НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ).',
+  })
   @ApiResponse({ status: 200, type: CategoryStatusResponse })
   async updateCategory(
     @Body() dto: UpdateCategory,
   ): Promise<IResponse<IStatus>> {
-    logger.info(
-      `Working controller for PUT \"/categories/\" endpoint.`,
-    );
+    logger.info(`Working controller for PUT \"/categories/\" endpoint.`);
     return this.categoryService.updateCategory(dto);
   }
 
   // Нужно добавить id в запрос
   @Patch()
-  @ApiOperation({summary: "Обновление категории частично (НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ)."})
+  @ApiOperation({
+    summary: 'Обновление категории частично (НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ).',
+  })
   @ApiResponse({ status: 200, type: CategoryStatusResponse })
   async partialyUpdateCategory(
     @Body() dto: PartialyUpdateCategory,
   ): Promise<IResponse<IStatus>> {
-    logger.info(
-      `Working controller for PATCH \"/categories/\" endpoint.`,
-    );
+    logger.info(`Working controller for PATCH \"/categories/\" endpoint.`);
     return this.categoryService.partialyUpdateCategory(dto);
   }
 
   @Delete(':id')
   @ApiResponse({ status: 200, type: CategoryStatusResponse })
-  async deleteCategory(
-    @Param('id') id: number,
-  ): Promise<IResponse<IStatus>> {
+  async deleteCategory(@Param('id') id: number): Promise<IResponse<IStatus>> {
     logger.info(
       `Working controller for DELETE \"/categories/${id}\" endpoint.`,
     );

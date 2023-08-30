@@ -3,3 +3,7 @@ export interface IResponse<R> {
   data: null | R | R[];
   message?: null | string;
 }
+
+export interface IStatus {
+  status: boolean;
+}

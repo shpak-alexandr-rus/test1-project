@@ -20,9 +20,7 @@ async function bootstrap() {
   await app
     .listen(+process.env.PORT)
     .then(() => {
-      logger.info(
-        `Server started on ${process.env.PORT} port!`,
-      );
+      logger.info(`Server started on ${process.env.PORT} port!`);
     })
     .catch((e) => {
       logger.error(e.message);

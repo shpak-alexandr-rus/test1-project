@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { IHealthCheckResponce } from 'src/interfaces/responses/health-check';
 import { AppDataSource } from '../../../data-source';
 import { DataSource } from 'typeorm';
-import { IResponse } from 'src/interfaces/responses';
 import logger from '../../logger/logger';
+import { IResponse } from 'src/interfaces/responses';
+import { IHealthCheckResponce } from 'src/interfaces/responses/health-check';
 
 @Injectable()
 export class HealthCheckService {

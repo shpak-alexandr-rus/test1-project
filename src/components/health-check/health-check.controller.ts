@@ -3,7 +3,7 @@ import { HealthCheckService } from './health-check.service';
 import { IResponse } from 'src/interfaces/responses';
 import { IHealthCheckResponce } from 'src/interfaces/responses/health-check';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { HealthCheckResponse } from 'src/dto/health-check/health-check.dto';
+import { HealthCheckResponse } from 'src/components/health-check/dto/health-check-responce.dto';
 import logger from '../../logger/logger';
 
 @Controller()

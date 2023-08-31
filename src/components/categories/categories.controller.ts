@@ -39,10 +39,11 @@ export class CategoryController {
   })
   @ApiResponse({ status: 200, type: CategoryPaginationResponse })
   async getCategoriesList(
-    @Query() query: FilterQuery
+    @Query() query: FilterQuery,
   ): Promise<IResponse<IPagination<ICategory>>> {
     logger.info('Working controller for GET "/categories/" endpoint.');
-    const result: IResponse<IPagination<ICategory>> = await this.categoryService.getCategoriesList(query);
+    const result: IResponse<IPagination<ICategory>> =
+      await this.categoryService.getCategoriesList(query);
     this.throwExceptionIfBadCode(result);
     return result;
   }
@@ -57,7 +58,8 @@ export class CategoryController {
     logger.info(
       'Working controller for GET "/categories/get-all-categories" endpoint.',
     );
-    const result: IResponse<ICategory> = await this.categoryService.getAllCategories();
+    const result: IResponse<ICategory> =
+      await this.categoryService.getAllCategories();
     this.throwExceptionIfBadCode(result);
     return result;
   }
@@ -71,7 +73,8 @@ export class CategoryController {
     logger.info(
       `Working controller for \"/categories?slug=${slug}\" endpoint.`,
     );
-    const result: IResponse<ICategory> = await this.categoryService.getCategoryBySlug(slug);
+    const result: IResponse<ICategory> =
+      await this.categoryService.getCategoryBySlug(slug);
     this.throwExceptionIfBadCode(result);
     return result;
   }
@@ -95,7 +98,8 @@ export class CategoryController {
     @Body() dto: CreateCategory,
   ): Promise<IResponse<ICategory>> {
     logger.info(`Working controller for POST \"/categories/\" endpoint.`);
-    const result: IResponse<ICategory> = await this.categoryService.crearteCategory(dto);
+    const result: IResponse<ICategory> =
+      await this.categoryService.crearteCategory(dto);
     this.throwExceptionIfBadCode(result);
     return result;
   }
@@ -103,8 +107,7 @@ export class CategoryController {
   // Нужно добавить id в запрос
   @Put(':id')
   @ApiOperation({
-    summary:
-      'Обновление всей категории целиком.',
+    summary: 'Обновление всей категории целиком.',
   })
   @ApiResponse({ status: 200, type: CategoryStatusResponse })
   async updateCategory(
@@ -112,7 +115,8 @@ export class CategoryController {
     @Body() dto: UpdateCategory,
   ): Promise<IResponse<IStatus>> {
     logger.info(`Working controller for PUT \"/categories/${id}\" endpoint.`);
-    const result: IResponse<IStatus> = await this.categoryService.updateCategory(id, dto);
+    const result: IResponse<IStatus> =
+      await this.categoryService.updateCategory(id, dto);
     this.throwExceptionIfBadCode(result);
     return result;
   }
@@ -128,7 +132,8 @@ export class CategoryController {
     @Body() dto: PartialyUpdateCategory,
   ): Promise<IResponse<IStatus>> {
     logger.info(`Working controller for PATCH \"/categories/${id}\" endpoint.`);
-    const result: IResponse<IStatus> = await this.categoryService.partialyUpdateCategory(id, dto);
+    const result: IResponse<IStatus> =
+      await this.categoryService.partialyUpdateCategory(id, dto);
     this.throwExceptionIfBadCode(result);
     return result;
   }
@@ -139,7 +144,8 @@ export class CategoryController {
     logger.info(
       `Working controller for DELETE \"/categories/${id}\" endpoint.`,
     );
-    const result: IResponse<IStatus> = await this.categoryService.deleteCategory(id);
+    const result: IResponse<IStatus> =
+      await this.categoryService.deleteCategory(id);
     this.throwExceptionIfBadCode(result);
     return result;
   }

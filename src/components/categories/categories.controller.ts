@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
   Param,
   Patch,
   Post,
@@ -10,17 +11,18 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IResponse, IStatus } from 'src/interfaces/responses';
+import { IPagination, IResponse, IStatus } from 'src/interfaces/responses';
 import { ICategory } from 'src/interfaces/responses/categories';
 import logger from 'src/logger/logger';
 import { CategoryService } from './categories.service';
-import { CategoriesPagListResponse } from './dto/categories-pag-list-response.dto';
 import { AllCategoriesResponse } from './dto/all-categories-response.dto';
 import { CategoryResponse } from './dto/category-response.dto';
 import { CreateCategory } from './dto/create-category.dto';
 import { CategoryStatusResponse } from './dto/category-status-response.dto';
 import { UpdateCategory } from './dto/update-category.dto';
 import { PartialyUpdateCategory } from './dto/partialy-update-category.dto';
+import { FilterQuery } from './dto/filter-query.dto';
+import { CategoryPaginationResponse } from './dto/category-pagination-response.dto';
 
 @Controller('categories')
 @ApiTags('Работа с категориями')
@@ -30,15 +32,19 @@ export class CategoryController {
   /* TODO: Эта часть будет переделана под рагинацию, сортировку и фильтрацию.
      IResponse<ICategory> нужно будет заменить на что-то с пагинацией (эта часть 100% не подойдет)
   */
-  @Get()
+  @Get('?')
   @ApiOperation({
     summary:
-      'Возвращает список категорий (с пагинацией, сортировкой и фильтрацией).',
+      'Возвращает список категорий (с пагинацией, сортировкой и фильтрацией). ПОКА БЕЗ ФИЛЬТРАЦИИ - РАЗБИРАЮСЬ',
   })
-  @ApiResponse({ status: 200, type: CategoriesPagListResponse })
-  async getCategoriesList(): Promise<IResponse<ICategory>> {
+  @ApiResponse({ status: 200, type: CategoryPaginationResponse })
+  async getCategoriesList(
+    @Query() query: FilterQuery
+  ): Promise<IResponse<IPagination<ICategory>>> {
     logger.info('Working controller for GET "/categories/" endpoint.');
-    return this.categoryService.getCategoriesList();
+    const result: IResponse<IPagination<ICategory>> = await this.categoryService.getCategoriesList(query);
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   @Get('get-all-categories')
@@ -51,7 +57,9 @@ export class CategoryController {
     logger.info(
       'Working controller for GET "/categories/get-all-categories" endpoint.',
     );
-    return this.categoryService.getAllCategories();
+    const result: IResponse<ICategory> = await this.categoryService.getAllCategories();
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   @Get('slug?')
@@ -63,7 +71,9 @@ export class CategoryController {
     logger.info(
       `Working controller for \"/categories?slug=${slug}\" endpoint.`,
     );
-    return this.categoryService.getCategoryBySlug(slug);
+    const result: IResponse<ICategory> = await this.categoryService.getCategoryBySlug(slug);
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   @Get(':id')
@@ -73,7 +83,9 @@ export class CategoryController {
     @Param('id') id: number,
   ): Promise<IResponse<ICategory>> {
     logger.info(`Working controller for GET \"/categories/${id}\" endpoint.`);
-    return this.categoryService.getCategoryById(id);
+    const result = await this.categoryService.getCategoryById(id);
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   @Post()
@@ -83,7 +95,9 @@ export class CategoryController {
     @Body() dto: CreateCategory,
   ): Promise<IResponse<ICategory>> {
     logger.info(`Working controller for POST \"/categories/\" endpoint.`);
-    return this.categoryService.crearteCategory(dto);
+    const result: IResponse<ICategory> = await this.categoryService.crearteCategory(dto);
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   // Нужно добавить id в запрос
@@ -97,7 +111,10 @@ export class CategoryController {
     @Body() dto: UpdateCategory,
   ): Promise<IResponse<IStatus>> {
     logger.info(`Working controller for PUT \"/categories/\" endpoint.`);
-    return this.categoryService.updateCategory(dto);
+
+    const result: IResponse<IStatus> = await this.categoryService.updateCategory(dto);
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   // Нужно добавить id в запрос
@@ -110,7 +127,9 @@ export class CategoryController {
     @Body() dto: PartialyUpdateCategory,
   ): Promise<IResponse<IStatus>> {
     logger.info(`Working controller for PATCH \"/categories/\" endpoint.`);
-    return this.categoryService.partialyUpdateCategory(dto);
+    const result: IResponse<IStatus> = await this.categoryService.partialyUpdateCategory(dto);
+    this.throwExceptionIfBadCode(result);
+    return result;
   }
 
   @Delete(':id')
@@ -119,6 +138,15 @@ export class CategoryController {
     logger.info(
       `Working controller for DELETE \"/categories/${id}\" endpoint.`,
     );
-    return this.categoryService.deleteCategory(id);
+    const result: IResponse<IStatus> = await this.categoryService.deleteCategory(id);
+    this.throwExceptionIfBadCode(result);
+    return result;
+  }
+
+  // Приватная часть
+  private throwExceptionIfBadCode(result: IResponse<any>): void {
+    if (result.code > 399) {
+      throw new HttpException(result.message, result.code);
+    }
   }
 }

@@ -3,7 +3,7 @@ import { IPagination, IResponse, IStatus } from 'src/interfaces/responses';
 import logger from '../../logger/logger';
 import { ICategory } from 'src/interfaces/responses/categories';
 import { CategoryEntity } from 'src/entities/category.entity';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCategory } from './dto/create-category.dto';
 import { UpdateCategory } from './dto/update-category.dto';
@@ -41,7 +41,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -61,7 +61,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -76,7 +76,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -94,7 +94,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -131,7 +131,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -149,7 +149,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -167,11 +167,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      return {
-        code: HttpStatus.INTERNAL_SERVER_ERROR,
-        data: null,
-        message: e.message,
-      };
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -189,7 +185,7 @@ export class CategoryService {
       };
     } catch (e) {
       logger.error(`Getted error with message: ${e.message}`);
-      throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(e.message, e.status ? e.status : HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -206,12 +202,16 @@ export class CategoryService {
     switch (value) {
       case 1:
       case true:
+      case "1":
+      case "true":
         return true;
       case 0:
       case false:
+      case "0":
+      case "false":
         return false;
       default:
-        throw new Error('Incorrect value for Active column.');
+        throw new HttpException('Incorrect value for Active column.', HttpStatus.FORBIDDEN);
     }
   }
 
@@ -244,6 +244,25 @@ export class CategoryService {
         : "ASC"
       : "DESC";
     resultQuery.order = order;
+
+    const whereOption = {};
+    if (!query.search) {
+      if (query.name && !this.isOnlySpaces(query.name)) {
+        whereOption["name"] = ILike(`%${query.name}%`);
+      } else if (query.description && !this.isOnlySpaces(query.description)) {
+        whereOption["description"] = ILike(`%${query.description}%`);
+      } else if (query.active && !this.isOnlySpaces(query.active)) {
+        whereOption["active"] = this.getActiveValue(query.active);
+      }
+      if (Object.keys(whereOption).length !== 0) {
+        resultQuery.where = whereOption;
+      }
+    } else {
+      const searchWhereOption = [];
+      searchWhereOption.push({name: ILike(`%${query.search}%`)});
+      searchWhereOption.push({description: ILike(`%${query.search}%`)});
+      resultQuery.where = searchWhereOption;
+    }
     
     return resultQuery;
   }
@@ -271,5 +290,9 @@ export class CategoryService {
       return Number.isInteger(+value);
     }
     return false;
+  }
+
+  private isOnlySpaces(value: string): boolean {
+    return value.substring(1, value.length - 2).trim().length === 0;
   }
 }

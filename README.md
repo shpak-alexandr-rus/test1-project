@@ -19,3 +19,5 @@ http://localhost:8080/swagger
 ```
 http://localhost:8080/categories?page=a&pageSize=b&sort=active
 ```
+
+P.S.: Фильтрация реализована, но не польностью. Не реализована фильтрация с ситуацией Е и Ё.

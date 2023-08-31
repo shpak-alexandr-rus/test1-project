@@ -103,9 +103,7 @@ export class CategoryService {
   ): Promise<IResponse<ICategory>> {
     logger.info('Start crearteCategory method.');
     try {
-      const checkSlug: RegExpMatchArray =
-        createCategoryDto.slug.match(/[a-zA-Z\s]+/g);
-      if (!checkSlug || checkSlug.length !== 1) {
+      if (!this.isSlugValueCorrect(createCategoryDto.slug)) {
         return {
           code: HttpStatus.FORBIDDEN,
           data: null,
@@ -136,11 +134,31 @@ export class CategoryService {
   }
 
   async updateCategory(
+    categoryId: number,
     updateCategoryDto: UpdateCategory,
   ): Promise<IResponse<IStatus>> {
     logger.info('Start updateCategory method.');
     try {
-      // Need to implement
+      const category: Object = {...updateCategoryDto};
+
+      if (!this.isSlugValueCorrect(updateCategoryDto.slug)) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          data: null,
+          message: 'Slug value incorrect.',
+        };
+      }
+      if (!(await this.isSlugUnick(updateCategoryDto.slug, categoryId))) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          data: null,
+          message: 'Slug already exists in database.',
+        };
+      }
+      category["active"] = this.getActiveValue(updateCategoryDto.active);
+      category["id"] = +categoryId;
+
+      await this.categoryRepository.save(category);
       return {
         code: HttpStatus.OK,
         data: {
@@ -154,11 +172,35 @@ export class CategoryService {
   }
 
   async partialyUpdateCategory(
+    categoryId: number,
     partialyUpdateCategoryDto: PartialyUpdateCategory,
   ): Promise<IResponse<IStatus>> {
     logger.info('Start partialyUpdateCategory method.');
     try {
-      // Need to implement
+      const category: Object = {...partialyUpdateCategoryDto};
+
+      if (partialyUpdateCategoryDto.slug) {
+        if (!this.isSlugValueCorrect(partialyUpdateCategoryDto.slug)) {
+          return {
+            code: HttpStatus.FORBIDDEN,
+            data: null,
+            message: 'Slug value incorrect.',
+          };
+        }
+        if (!(await this.isSlugUnick(partialyUpdateCategoryDto.slug, categoryId))) {
+          return {
+            code: HttpStatus.FORBIDDEN,
+            data: null,
+            message: 'Slug already exists in database.',
+          };
+        }
+      }
+      
+      if (partialyUpdateCategoryDto.active) {
+        category["active"] = this.getActiveValue(partialyUpdateCategoryDto.active);
+      }
+
+      await this.categoryRepository.update(categoryId, category);
       return {
         code: HttpStatus.OK,
         data: {
@@ -190,11 +232,11 @@ export class CategoryService {
   }
 
   // Приватные методы
-  private async isSlugUnick(categorySlug: string): Promise<boolean> {
+  private async isSlugUnick(categorySlug: string, categoryId?: number): Promise<boolean> {
     logger.info('Start isSlugUnick method.');
     const categoryBySlug: CategoryEntity =
       await this.categoryRepository.findOne({ where: { slug: categorySlug } });
-    return !categoryBySlug;
+    return !categoryBySlug || (categoryId && categoryBySlug.id === +categoryId);
   }
 
   //TODO: нужно переделать
@@ -224,20 +266,20 @@ export class CategoryService {
     resultQuery.skip = query.page && query.pageSize ? validPageSizeNumber * (validPageNumber - 1) : 0;
     resultQuery.take = validPageSizeNumber;
 
-    const isDescSort = query.sort && query.sort.indexOf('-') === 0;
-    const isSortColumnExist = query.sort
+    const isDescSort: boolean = query.sort && query.sort.indexOf('-') === 0;
+    const isSortColumnExist: boolean = query.sort
       ? isDescSort
         ? columnNames.includes(query.sort.substring(1, query.sort.length - 1))
         : columnNames.includes(query.sort)
       : false;
 
-    const sortColumnName = isSortColumnExist 
+    const sortColumnName: string = isSortColumnExist 
       ? isDescSort
         ? query.sort.substring(1, query.sort.length - 1)
         : query.sort
       : "createdDate";
 
-    const order = {};
+    const order: Object = {};
     order[sortColumnName] = isSortColumnExist
       ? isDescSort
         ? "DESC"
@@ -245,7 +287,7 @@ export class CategoryService {
       : "DESC";
     resultQuery.order = order;
 
-    const whereOption = {};
+    const whereOption: Object = {};
     if (!query.search) {
       if (query.name && !this.isOnlySpaces(query.name)) {
         whereOption["name"] = ILike(`%${query.name}%`);
@@ -258,7 +300,7 @@ export class CategoryService {
         resultQuery.where = whereOption;
       }
     } else {
-      const searchWhereOption = [];
+      const searchWhereOption: Array<Object> = [];
       searchWhereOption.push({name: ILike(`%${query.search}%`)});
       searchWhereOption.push({description: ILike(`%${query.search}%`)});
       resultQuery.where = searchWhereOption;
@@ -294,5 +336,10 @@ export class CategoryService {
 
   private isOnlySpaces(value: string): boolean {
     return value.substring(1, value.length - 2).trim().length === 0;
+  }
+
+  private isSlugValueCorrect(slugValue: string): boolean {
+    const checkSlug: RegExpMatchArray = slugValue.match(/[a-zA-Z\s]+/g);
+    return checkSlug && checkSlug.length === 1;
   }
 }

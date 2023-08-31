@@ -35,7 +35,7 @@ export class CategoryController {
   @Get('?')
   @ApiOperation({
     summary:
-      'Возвращает список категорий (с пагинацией, сортировкой и фильтрацией). ПОКА БЕЗ ФИЛЬТРАЦИИ - РАЗБИРАЮСЬ',
+      'Возвращает список категорий (с пагинацией, сортировкой и фильтрацией). ПОКА БЕЗ Е И Ё',
   })
   @ApiResponse({ status: 200, type: CategoryPaginationResponse })
   async getCategoriesList(
@@ -101,33 +101,34 @@ export class CategoryController {
   }
 
   // Нужно добавить id в запрос
-  @Put()
+  @Put(':id')
   @ApiOperation({
     summary:
-      'Обновление всей категории целиком (НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ).',
+      'Обновление всей категории целиком.',
   })
   @ApiResponse({ status: 200, type: CategoryStatusResponse })
   async updateCategory(
+    @Param('id') id: number,
     @Body() dto: UpdateCategory,
   ): Promise<IResponse<IStatus>> {
-    logger.info(`Working controller for PUT \"/categories/\" endpoint.`);
-
-    const result: IResponse<IStatus> = await this.categoryService.updateCategory(dto);
+    logger.info(`Working controller for PUT \"/categories/${id}\" endpoint.`);
+    const result: IResponse<IStatus> = await this.categoryService.updateCategory(id, dto);
     this.throwExceptionIfBadCode(result);
     return result;
   }
 
   // Нужно добавить id в запрос
-  @Patch()
+  @Patch(':id')
   @ApiOperation({
-    summary: 'Обновление категории частично (НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ).',
+    summary: 'Обновление категории частично.',
   })
   @ApiResponse({ status: 200, type: CategoryStatusResponse })
   async partialyUpdateCategory(
+    @Param('id') id: number,
     @Body() dto: PartialyUpdateCategory,
   ): Promise<IResponse<IStatus>> {
-    logger.info(`Working controller for PATCH \"/categories/\" endpoint.`);
-    const result: IResponse<IStatus> = await this.categoryService.partialyUpdateCategory(dto);
+    logger.info(`Working controller for PATCH \"/categories/${id}\" endpoint.`);
+    const result: IResponse<IStatus> = await this.categoryService.partialyUpdateCategory(id, dto);
     this.throwExceptionIfBadCode(result);
     return result;
   }

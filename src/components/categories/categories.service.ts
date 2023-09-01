@@ -3,7 +3,7 @@ import { IPagination, IResponse, IStatus } from 'src/interfaces/responses';
 import logger from '../../logger/logger';
 import { ICategory } from 'src/interfaces/responses/categories';
 import { CategoryEntity } from 'src/entities/category.entity';
-import { FindManyOptions, ILike, Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCategory } from './dto/create-category.dto';
 import { UpdateCategory } from './dto/update-category.dto';
@@ -32,25 +32,23 @@ export class CategoryService {
   ): Promise<IResponse<IPagination<ICategory>>> {
     logger.info('Start getCategoriesList method.');
     try {
-      const findOptions: FindManyOptions<CategoryEntity> =
-        this.buildFindOptions(query);
+      const selectQuery: SelectQueryBuilder<CategoryEntity> =
+        this.buildSelectQuery(this.categoryRepository, query);
 
-      const categoriesEntities: CategoryEntity[] =
-        await this.categoryRepository.find(findOptions);
-      const totalEntitiesCount: number =
-        await this.categoryRepository.count(findOptions);
+      const categoriesEntities: [CategoryEntity[], number] =
+        await selectQuery.getManyAndCount();
 
       return {
         code: HttpStatus.OK,
         data: {
-          data: categoriesEntities,
+          data: categoriesEntities[0],
           page: this.getValidPageNumber(query.page),
           totalPages: query.pageSize
             ? Math.ceil(
-                totalEntitiesCount /
+                categoriesEntities[1] /
                   this.getValidPageSizeNumber(query.pageSize),
               )
-            : Math.ceil(totalEntitiesCount / 2),
+            : Math.ceil(categoriesEntities[1] / 2),
         },
       };
     } catch (e) {
@@ -305,21 +303,22 @@ export class CategoryService {
     }
   }
 
-  private buildFindOptions(
+  private buildSelectQuery(
+    repository: Repository<CategoryEntity>,
     query: FilterQuery,
-  ): FindManyOptions<CategoryEntity> {
-    const resultQuery: FindManyOptions<CategoryEntity> = {};
+  ): SelectQueryBuilder<CategoryEntity> {
+    const selectQueryBuilder: SelectQueryBuilder<CategoryEntity> = repository
+      .createQueryBuilder()
+      .select();
 
     const validPageNumber: number = this.getValidPageNumber(query.page);
     const validPageSizeNumber: number = this.getValidPageSizeNumber(
       query.pageSize,
     );
 
-    resultQuery.skip =
-      query.page && query.pageSize
-        ? validPageSizeNumber * (validPageNumber - 1)
-        : 0;
-    resultQuery.take = validPageSizeNumber;
+    selectQueryBuilder
+      .offset(validPageSizeNumber * (validPageNumber - 1))
+      .limit(validPageSizeNumber);
 
     const isDescSort: boolean = query.sort && query.sort.indexOf('-') === 0;
     const isSortColumnExist: boolean = query.sort
@@ -334,34 +333,37 @@ export class CategoryService {
         : query.sort
       : 'createdDate';
 
-    const order: object = {};
-    order[sortColumnName] = isSortColumnExist
-      ? isDescSort
-        ? 'DESC'
-        : 'ASC'
-      : 'DESC';
-    resultQuery.order = order;
+    selectQueryBuilder.orderBy(
+      sortColumnName,
+      isSortColumnExist ? (isDescSort ? 'DESC' : 'ASC') : 'DESC',
+    );
 
-    const whereOption: object = {};
     if (!query.search) {
       if (query.name && !this.isOnlySpaces(query.name)) {
-        whereOption['name'] = ILike(`%${query.name}%`);
+        selectQueryBuilder.where('UPPER(name) SIMILAR TO UPPER(:searchTerm)', {
+          searchTerm: `%${query.name.replaceAll('е', '(е|ё)')}%`,
+        });
       } else if (query.description && !this.isOnlySpaces(query.description)) {
-        whereOption['description'] = ILike(`%${query.description}%`);
+        selectQueryBuilder.where(
+          'UPPER(description) SIMILAR TO UPPER(:searchTerm)',
+          { searchTerm: `%${query.description.replaceAll('е', '(е|ё)')}%` },
+        );
       } else if (query.active && !this.isOnlySpaces(query.active)) {
-        whereOption['active'] = this.getActiveValue(query.active);
-      }
-      if (Object.keys(whereOption).length !== 0) {
-        resultQuery.where = whereOption;
+        selectQueryBuilder.where('active = :searchTerm', {
+          searchTerm: `${this.getActiveValue(query.active)}`,
+        });
       }
     } else {
-      const searchWhereOption: Array<object> = [];
-      searchWhereOption.push({ name: ILike(`%${query.search}%`) });
-      searchWhereOption.push({ description: ILike(`%${query.search}%`) });
-      resultQuery.where = searchWhereOption;
+      selectQueryBuilder
+        .where('UPPER(name) SIMILAR TO UPPER(:searchTerm)', {
+          searchTerm: `%${query.search.replaceAll('е', '(е|ё)')}%`,
+        })
+        .orWhere('UPPER(description) SIMILAR TO UPPER(:searchTerm)', {
+          searchTerm: `%${query.search.replaceAll('е', '(е|ё)')}%`,
+        });
     }
 
-    return resultQuery;
+    return selectQueryBuilder;
   }
 
   private getValidPageNumber(pageNumber: number): number {
@@ -386,7 +388,9 @@ export class CategoryService {
   }
 
   private isOnlySpaces(value: string): boolean {
-    return value.substring(1, value.length - 2).trim().length === 0;
+    return value[0] === '"'
+      ? value.substring(1, value.length - 2).trim().length === 0
+      : value.trim().length === 0;
   }
 
   private isSlugValueCorrect(slugValue: string): boolean {
